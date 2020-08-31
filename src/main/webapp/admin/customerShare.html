@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>客户共享</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+	<script src="../js/jqPaginator.min.js"></script>
+
+	<script type="text/javascript">
+		//var cmd="customer";
+		//JSON对象全局变量
+
+		//var page ={pageNum:1,size:2,rowCount:0,pageCount:0,cusid:0,cusName:""};
+
+		$(function(){
+			list();
+		});
+
+		//查询列表数据
+		function list(pageNum,isFirst) {
+			//更新页码
+			// page.pageNum=pageNum;
+
+			$.get("../cus/shareById",{}, function(data){
+				console.log(data);
+				$("#tb").children().remove();
+				$.each(data,function (i,e) {
+					console.log(e);
+
+					$("#tb").append('<tr> <td>'+e.cusid
+							+'</td> <td>'+e.cusName
+							+'</td> <td>'+e.empid
+							+'</td> <td>'+e.empName
+							+'</td> <td class="text-center"> <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#editModal"   onclick="showEdit('+ e.id+','+ e.empid +','+ e.cusid +')">转移共享关系</button> <button type="button" class="btn bg-olive btn-xs"  onclick="del('+ e.id+')" >删除共享关系</button> </td> </tr>\n')
+				});
+
+			// 	//第一次显示分页插件，后面需需要更新数据即可
+			// 	if(isFirst){
+			// 		$('#page').jqPaginator({
+            //         pageSize:page.size,//每一页多少条记录
+            //         totalCounts:data.rowCount,
+            //         visiblePages: 5,
+            //         currentPage: 1,
+			// 		//totalPages:data.pageCount,
+			//
+            //         first: '<li class="first"><a href="javascript:void(0);">首页</a></li>',
+            //         prev: '<li class="prev"><a href="javascript:void(0);">上一页</a></li>',
+            //         next: '<li class="next"><a href="javascript:void(0);">下一页</a></li>',
+            //         last: '<li class="last"><a href="javascript:void(0);">尾页</a></li>',
+            //         page: '<li class="page"><a href="javascript:void(0);">{{page}}</a></li>',
+            //         onPageChange: function (pageNo) {
+            //             console.log(pageNo);
+            //             //通过的页码的改变，更新数据
+			// 			list(pageNo,false);
+            //         }
+            //    	 });
+			//
+			// 	}
+			},"json");
+		}
+
+
+
+		//新增
+		function ins(t) {
+			$("#modify").val(1);
+			// $("#cusid").val(t);
+		}
+		//
+		// function add() {
+		// 	var formData=$('#editForm').serializeArray();
+		// 	var json ={
+		// 		"cusName":$("#cusName").val(),"tel":$("#tel").val()
+		// 	};
+		// 	console.log(json);
+		// 	$.post("../cus/add",json,function (result) {
+		// 		if(result){
+		// 			list(page.pageCount,true);
+		// 		}
+		// 	},"json");
+		// }
+
+		function addShare(){
+			$("#modify").val(0);
+		}
+
+
+
+
+		function edit() {
+			console.log($("#cusid").val());
+			// var cus ={cusName: $("#cusName").val()};
+			// var formData= $('#editForm').serializeArray();
+			var modify = $("#modify").val();
+
+			var json ={
+				cusid:$("#cusid").val(),empid:$("#empid").val()
+			};
+			if (modify === "0") {
+				$.post("../cus/addShare", json, function (result) {
+						list(page.pageCount, true);
+				}, "json")
+			}else {
+				$.get("../cus/getById",{id:$("#id").val(),empid:$("#empid").val()},function (result) {
+					if (result) {
+						list(page.pageCount, true);
+					}
+				},"json");
+			}
+			console.log(json);
+			//请求controller
+
+			$("#cusName").val("");
+			$("#tel").val("")
+			$("#modify").val(0);
+		}
+
+
+
+		//删除
+		function del(id){
+			if(confirm("是否删除？")){
+				$.post("../cus/delshare", {id:id},function (result) {
+					if(result){
+						list(page.pageCount,true);
+					}
+				},"json");
+			}
+		}
+
+
+
+
+
+
+		function showEdit(id,empid,cusid) {
+			$("#cusid").val(cusid);
+			$("#empid").val(empid);
+			$("#id").val(id);
+			$("#modify").val(1);
+
+
+		}
+
+
+
+	</script>
+
+
+</head>
+<body class="hold-transition skin-red sidebar-mini">
+
+
+<!--
+http://localhost:9001/maven-web-0815/emp/list?pageNum=1&size=2
+-->
+<!-- .box-body -->
+<div class="box-header with-border">
+	<h3 class="box-title">客户共享</h3>
+</div>
+
+<div class="box-body">
+
+
+	<!-- 数据表格 -->
+	<div class="table-box">
+
+		<!--工具栏-->
+		<div class="pull-left">
+			<div class="form-group form-inline">
+				<div class="btn-group">
+					<button type="button" class="btn btn-default" title="添加共享关系" data-toggle="modal"
+							data-target="#editModal"  onclick="addShare()">添加共享关系</button>
+				</div>
+			</div>
+		</div>
+		<div class="box-tools pull-right">
+			<div class="has-feedback">
+			</div>
+		</div>
+		<!--工具栏/-->
+
+		<!--数据列表-->
+		<table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			<thead>
+			<tr>
+
+				<th class="sorting_asc">客户ID</th>
+				<th class="sorting">客户姓名</th>
+				<th class="text-center">员工ID</th>
+				<th class="text-center">员工姓名</th>
+				<th class="text-center">操作</th>
+			</tr>
+			</thead>
+			<tbody id="tb">
+
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- 编辑窗口 -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" >
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 id="myModalLabel">编辑窗口</h3>
+			</div>
+			<div class="modal-body">
+				<form id="editForm">
+
+					<table class="table table-bordered table-striped"  width="800px">
+						<input type="hidden" name="id"  id="id" >
+						<tr>
+							<td>用户ID</td>
+							<td>
+								<input type="hidden" name="modify"  id="modify" value="0" >
+								<input  class="form-control"  name="cusid" id="cusid" >
+							</td>
+						</tr>
+						<tr>
+							<td>员工ID</td>
+							<td>
+								<input  type="number" class="form-control"  name="empid" id="empid" >
+							</td>
+						</tr>
+
+					</table>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="edit()" >保存</button>
+				<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+			</div>
+		</div>
+	</div>
+</div>
+<ul class="pagination" id="page"></ul>
+
+</body>
+</html>

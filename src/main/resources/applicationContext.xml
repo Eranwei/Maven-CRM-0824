@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+		xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:p="http://www.springframework.org/schema/p"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xmlns:tx="http://www.springframework.org/schema/tx" xmlns:mvc="http://www.springframework.org/schema/mvc"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans
+	 http://www.springframework.org/schema/beans/spring-beans.xsd
+	 http://www.springframework.org/schema/context
+	 http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop
+	 http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+	 http://www.springframework.org/schema/tx/spring-tx.xsd
+	 http://www.springframework.org/schema/mvc
+	 http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+
+	<!--自动扫描，扫描后才支持注解的方式注入 -->
+	<context:component-scan base-package="com.service,com.controller"></context:component-scan>
+
+	<!--spring读取db.properties-->
+	<bean id="ppc" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+		<property name="locations" value="classpath:db.properties"></property>
+	</bean>
+
+	<!--spring整合mybatis-->
+	<!--数据源  dataSource   dbcp-->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driver}"></property>
+		<property name="url" value="${url}"></property>
+		<property name="username" value="${username}"></property>
+		<property name="password" value="${password}"></property>
+	</bean>
+	<!--sessionFacotry-->
+	<bean id="sessionFacotry" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+		<property name="typeAliasesPackage" value="com.model"></property>
+		<property name="plugins" >
+			<array>
+				<bean class="com.github.pagehelper.PageInterceptor">
+					<property name="properties">
+						<props>
+							<prop key="reasonable">true</prop>
+							<prop key="helperDialect">mysql</prop>
+						</props>
+					</property>
+				</bean>
+			</array>
+		</property>
+	</bean>
+	<!--扫描dao层-->
+	<bean id="mscf" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.dao"></property>
+		<property name="sqlSessionFactoryBeanName" value="sessionFacotry"></property>
+	</bean>
+
+	<!--spring事务管理-->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<!--声明式事务-注解使用-->
+	<tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+	<!--Springmvc配置-->
+	<mvc:annotation-driven></mvc:annotation-driven>
+ 	<mvc:default-servlet-handler></mvc:default-servlet-handler>
+
+	<!--shiro相关配置-->
+
+	<!--shiro过滤器工厂-->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean"
+		  depends-on="roleOrFilter">
+			<!--安全管理器-->
+		<property name="securityManager" ref="securityManager"></property>
+			<!--统一的登录页-->
+		<property name="loginUrl" value="/login.html"></property>
+		<!--权限不足提示页-->
+		<property name="unauthorizedUrl" value="/unauth.html"></property>
+		<property name="filters">
+			<map>
+				<entry key="roleOrFilter" value-ref="roleOrFilter">
+				</entry>
+			</map>
+		</property>
+		<!--url配置-->
+		<property name="filterChainDefinitions" >
+			<value>
+				/login.html*=anon
+				/user/login*=anon
+				/css/**=anon
+				/img/**=anon
+				/js/**=anon
+				/admin/customer.html*=roleOrFilter["admin","manager","emp"]
+				/admin/customerVisit.html*=roleOrFilter["admin","manager","emp"]
+				/admin/customerShare.html*=roleOrFilter["admin","manager","emp"]
+				/admin/emp.html*=roleOrFilter["admin","manager"]
+				/admin/employee.html*=roleOrFilter["admin","manager"]
+				/admin/character.html*=roles["admin"]
+				/admin/perm.html*=roles["admin"]
+				/admin/Allcus.html*=roleOrFilter["admin","manager"]
+				/**=authc
+			</value>
+		</property>
+	</bean>
+
+	<!--安全管理器-->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="myRealm"></property>
+	</bean>
+	<!--shiro生命周期管理-->
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor">
+	</bean>
+
+	<!--开启shiro注解-->
+	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+		  depends-on="lifecycleBeanPostProcessor">
+	</bean>
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager"></property>
+	</bean>
+	<!--**UnauthorizedException跳转到unauth.html**-->
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="org.apache.shiro.authz.UnauthorizedException">/unauth.html</prop>
+			</props>
+		</property>
+	</bean>
+
+</beans>

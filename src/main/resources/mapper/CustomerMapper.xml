@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dao.CustomerMapper" >
+
+  <resultMap id="BaseResultMap" type="com.model.Customer" >
+    <id column="cusid" property="cusid" jdbcType="INTEGER" />
+    <result column="cusName" property="cusName" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="contact" property="contact" jdbcType="VARCHAR" />
+    <result column="tel" property="tel" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    cusid, cusName, address, contact, tel, email
+  </sql>
+
+
+
+  <select id="list" resultMap="BaseResultMap" parameterType="Customer" >
+    select
+    <include refid="Base_Column_List" />
+    from customer
+  </select>
+
+<select id="selectShare" resultType="CusShareModel">
+  SELECT customer.cusid,customer.cusName,employees.empid,employees.empName,customershare.id
+  FROM `customer`, `employees`, `customershare`
+  WHERE customer.cusid=customershare.cusId
+  AND employees.empid=customershare.empid;
+</select>
+
+  <select id="shareById" resultType="CusShareModel" parameterType="int">
+    SELECT customer.cusid,customer.cusName,employees.empid,employees.empName,customershare.id
+    FROM `customer`, `employees`, `customershare`
+    WHERE customer.cusid=customershare.cusId
+    AND employees.empid=customershare.empid
+    AND customer.cusid IN(SELECT cusid FROM customer WHERE empid=#{empid})
+  </select>
+
+
+
+  <select id="getById" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from customer
+    where cusid = #{cusid,jdbcType=INTEGER}
+  </select>
+
+  <delete id="delete" parameterType="java.lang.Integer" >
+    delete from customer
+    where cusid = #{cusid,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteShare" parameterType="java.lang.Integer" >
+    delete from customershare
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <insert id="insert" parameterType="com.model.Customer" >
+    insert into customer (cusid, cusName, address, contact, tel, email
+      )
+    values (#{cusid,jdbcType=INTEGER}, #{cusName,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR},
+      #{contact,jdbcType=VARCHAR}, #{tel,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <insert id="addShare" parameterType="CusShareModel">
+    INSERT INTO customershare(cusid,empid)
+    VALUES (#{cusid,jdbcType=INTEGER},#{empid,jdbcType=INTEGER})
+  </insert>
+
+  <update id="updateCusid" parameterType="CusShareModel">
+    update  customershare set empid = #{empid} where id = #{id}
+  </update>
+
+  <update id="update" parameterType="com.model.Customer" >
+    update customer
+    <set >
+      <if test="cusName != null" >
+        cusName = #{cusName,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null" >
+        contact = #{contact,jdbcType=VARCHAR},
+      </if>
+      <if test="tel != null" >
+        tel = #{tel,jdbcType=VARCHAR},
+      </if>
+
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+
+    </set>
+    where cusid = #{cusid,jdbcType=INTEGER}
+  </update>
+
+  <select id="listById" resultType="Customer" parameterType="int">
+    SELECT * FROM customer
+    WHERE empid =#{empid} or cusid in
+    (SELECT cusid FROM customershare WHERE empid=#{empid})
+  </select>
+
+</mapper>

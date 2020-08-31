@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dao.PermissionMapper" >
+  <resultMap id="BaseResultMap" type="com.model.Permission" >
+    <id column="permid" property="permid" jdbcType="INTEGER" />
+    <result column="pname" property="pname" jdbcType="VARCHAR" />
+    <result column="purl" property="purl" jdbcType="VARCHAR" />
+    <result column="ismenu" property="ismenu" jdbcType="INTEGER" />
+    <result column="parentId" property="parentId" jdbcType="INTEGER" />
+    <result column="pinfo" property="pinfo" jdbcType="VARCHAR" />
+  </resultMap>
+
+
+  <sql id="Base_Column_List" >
+    permid, pname, purl, ismenu, parentId, pinfo
+  </sql>
+
+<select id="getPermsByRoleId"  parameterType="int" resultType="Permission">
+select p.* from role r, permission p, role_perm rp where r.roleId = rp.roleId and p.permid=rp.permid and r.roleId = #{roleId}
+</select>
+<select id="list" resultType="Permission" >
+  SELECT *
+  FROM permission
+</select>
+
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from permission
+    where permid = #{permid,jdbcType=INTEGER}
+  </select>
+
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from permission
+    where permid= #{permid,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.model.Permission" >
+    insert into permission (permid, purl, pname,
+      ismenu, parentId, pinfo
+      )
+    values (#{permid,jdbcType=INTEGER}, #{purl,jdbcType=VARCHAR}, #{pname,jdbcType=VARCHAR},
+      #{ismenu,jdbcType=INTEGER}, #{parentId,jdbcType=INTEGER}, #{pinfo,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.model.Permission" >
+    insert into permission
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="permid != null" >
+        permid,
+      </if>
+      <if test="purl != null" >
+        purl,
+      </if>
+      <if test="pname != null" >
+        pname,
+      </if>
+      <if test="ismenu != null" >
+        ismenu,
+      </if>
+      <if test="parentId != null" >
+        parentId,
+      </if>
+      <if test="pinfo != null" >
+        pinfo,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="permid != null" >
+        #{permid,jdbcType=INTEGER},
+      </if>
+      <if test="purl != null" >
+        #{purl,jdbcType=VARCHAR},
+      </if>
+      <if test="pname != null" >
+        #{pname,jdbcType=VARCHAR},
+      </if>
+      <if test="ismenu != null" >
+        #{ismenu,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null" >
+        #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="pinfo != null" >
+        #{pinfo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.model.Permission" >
+    update permission
+    <set >
+      <if test="purl != null" >
+        purl = #{purl,jdbcType=VARCHAR},
+      </if>
+      <if test="pname != null" >
+        pname = #{pname,jdbcType=VARCHAR},
+      </if>
+      <if test="ismenu != null" >
+        ismenu = #{ismenu,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null" >
+        parentId = #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="pinfo != null" >
+        pinfo = #{pinfo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where permid= #{permid,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.model.Permission" >
+    update permission
+    set purl = #{purl,jdbcType=VARCHAR},
+      pname = #{pname,jdbcType=VARCHAR},
+      ismenu = #{ismenu,jdbcType=INTEGER},
+      parentId = #{parentId,jdbcType=INTEGER},
+      pinfo = #{pinfo,jdbcType=VARCHAR}
+    where permid = #{permid,jdbcType=INTEGER}
+  </update>
+</mapper>

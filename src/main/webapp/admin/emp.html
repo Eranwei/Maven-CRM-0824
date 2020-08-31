@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>员工管理</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+	<script src="../js/jqPaginator.min.js"></script>
+
+	<script type="text/javascript">
+		var cmd="emp";
+		//JSON对象全局变量
+		var page ={pageNum:1,size:2,rowCount:0,pageCount:0,empno:0,ename:""};
+
+		$(function(){
+
+
+
+			list(1,true);
+		});
+		var page ={pageNum:1,size:5,rowCount:0,pageCount:0};
+		//查询列表数据
+		function list(pageNum,isFirst) {
+			//更新页码
+			page.pageNum=pageNum;
+			//调用数据接口   ../emp/list
+			$.get("../emp/list",page, function(data){
+				console.log(data);
+				var emps =data.emps;
+				page.rowCount=data.rowCount;
+				page.pageCount=data.pageCount;
+
+				//遍历emps,用each
+				$("#tb").html("");
+				$.each(emps,function (i,e) {
+					console.log(e.ename);
+					$("#tb").append('<tr> <td>'+e.empno
+							+'</td> <td>'+e.ename
+							+'</td> <td class="text-center"> <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#editModal"   onclick="showEdit('+ e.empno+')">修改</button> <button type="button" class="btn bg-olive btn-xs"  onclick="del('+ e.empno+')" >删除</button> </td> </tr>\n')
+				});
+
+				//第一次显示分页插件，后面需需要更新数据即可
+				if(isFirst){
+					$('#page').jqPaginator({
+                    pageSize:page.size,//每一页多少条记录
+                    totalCounts:data.rowCount,
+                    visiblePages: 5,
+                    currentPage: 1,
+
+                    first: '<li class="first"><a href="javascript:void(0);">首页</a></li>',
+                    prev: '<li class="prev"><a href="javascript:void(0);">上一页</a></li>',
+                    next: '<li class="next"><a href="javascript:void(0);">下一页</a></li>',
+                    last: '<li class="last"><a href="javascript:void(0);">尾页</a></li>',
+                    page: '<li class="page"><a href="javascript:void(0);">{{page}}</a></li>',
+                    onPageChange: function (pageNo) {
+                        console.log(pageNo);
+                        //通过的页码的改变，更新数据
+						list(pageNo,false);
+                    }
+               	 });
+
+				}
+			},"json");
+		}
+
+		var modify=0;
+		function show() {
+			modify=0;
+			//$("#editForm").find("input").val("");
+			$("#editForm input").val("");
+			$("#empno").val("0");
+		}
+
+		//新增
+		function edit() {
+			var emp ={ename: $("#ename").val()};
+			var formData= $('#editForm').serializeArray();
+			var json ={};
+			$.each(formData, function() {
+				json[this.name] = this.value;
+			});
+			console.log(json);
+			if(modify===0){
+				//请求controller
+				$.post("../emp/edit",json,function (result) {
+					if(result){
+						list(page.pageCount,true);
+					}
+				},"json");
+			}else{
+				//请求controller
+				$.post("../emp/update",json,function (result) {
+					if(result){
+						list(page.pageCount,true);
+					}
+				},"json");
+			}
+
+		}
+
+
+		//删除
+		function del(empno) {
+			if(confirm("是否删除？")){
+				$.get("../emp/del",{empno:empno},function (res) {
+					if(res){
+						list(1,true);
+					}
+				},"json");
+			}
+		}
+
+
+
+
+		function showEdit(empno) {
+			modify=1;
+			$.get("../emp/getById",{empno:empno},function (data) {
+					//回显数据到表单，支持单行文本输入框
+					$.each(data,function(name,ival){
+						$("#editForm").find("[name="+name+"]").val(ival);
+					})
+
+			},"json");
+
+		}
+
+
+
+	</script>
+
+
+</head>
+<body class="hold-transition skin-red sidebar-mini">
+
+
+<!--
+http://localhost:9001/maven-web-0815/emp/list?pageNum=1&size=2
+-->
+<!-- .box-body -->
+<div class="box-header with-border">
+	<h3 class="box-title">员工管理</h3>
+</div>
+
+<div class="box-body">
+
+
+	<!-- 数据表格 -->
+	<div class="table-box">
+
+		<!--工具栏-->
+		<div class="pull-left">
+			<div class="form-group form-inline">
+				<div class="btn-group">
+					<button type="button" class="btn btn-default" title="新建" data-toggle="modal"
+							data-target="#editModal" onclick="show()" ><i class="fa fa-file-o"></i> 新建</button>
+
+				</div>
+			</div>
+		</div>
+		<div class="box-tools pull-right">
+			<div class="has-feedback">
+
+			</div>
+		</div>
+		<!--工具栏/-->
+
+		<!--数据列表-->
+		<table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			<thead>
+			<tr>
+
+				<th class="sorting_asc">用户ID</th>
+				<th class="sorting">用户名称</th>
+				<th class="text-center">操作</th>
+			</tr>
+			</thead>
+			<tbody id="tb">
+
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- 编辑窗口 -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" >
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 id="myModalLabel">编辑窗口</h3>
+			</div>
+			<div class="modal-body">
+				<form id="editForm">
+					<table class="table table-bordered table-striped"  width="800px">
+						<tr>
+							<td>用户名称</td>
+							<td>
+								<input type="hidden" name="modify"  id="modify" value="0" >
+								<input  type="hidden" name="empno" id="empno" value="0">
+								<input  class="form-control"  name="ename" id="ename" >
+							</td>
+						</tr>
+						<tr>
+							<td>工资</td>
+							<td>
+								<input  class="form-control"  name="sal" id="sal" >
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="edit()" >保存</button>
+				<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+			</div>
+		</div>
+	</div>
+</div>
+<ul class="pagination" id="page"></ul>
+
+</body>
+</html>

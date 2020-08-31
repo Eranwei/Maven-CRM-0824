@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>角色管理</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+
+	<script type="text/javascript" src="../js/jquery-3.5.1.min.js"></script>
+	<script type="text/javascript" src="../js/jqPaginator.min.js"></script>
+	<link rel="stylesheet" href="../js/bootstrap.min.css">
+<style >
+	.youY{
+		margin-left: 1000px;
+	}
+</style>
+	<script type="text/javascript">
+		// 启动加载
+		$(function () {
+			list(1,true);
+		})
+		// 全局
+		var page = {pageNum:1,size:5,rowCount:0,pageCount:0}
+		// 数据库分页加载
+		function list(pageNum,isFirst){
+			page.pageNum=pageNum;
+			$.post(
+
+					"../role/list",page,function (data) {
+						// 页面改变跳1
+
+						console.log(data);
+						$("#dataList").html("");
+						$("#dataList").append("<th class=\"sorting_asc\">职务编号</th>\n" +
+								"\t\t\t\t\t\t\t\t\t      <th class=\"sorting\">职务</th>\n" +
+
+								"\t\t\t\t\t\t\t\t\t      <th class=\"sorting\">职务代号</th>" +
+								" <th class=\"text-center\">操作</th>")
+						$.each(data.list,function (i,e) {
+
+							$("#dataList").append('<tr> <td>'+e.roleId
+									+'</td> <td>'+e.roleName
+									+'</td> <td>'+e.roleInfo
+									+'</td> <td class="text-center"> <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#editModal"   onclick="showEdit('+ e.roleId+')">修改</button>' +
+									' <button type="button" class="btn bg-olive btn-xs"  onclick="del('+ e.roleId+')" >删除</button>' +
+									' <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#addpermi"   onclick="addpermi('+ e.roleId+')">添加权限</button>' +
+									'</td> </tr>\n')
+						});
+
+
+					},"json"
+			)
+		}
+
+		function addpermi(id) {
+			$.get("../permi/list", {}, function (data) {
+				$.each(data,function (i,e) {
+					console.log(data)
+					$("#select").append("<option value='"+e.permid+"'> "+e.pname+"</option>")
+				})
+			}, "json")
+				$("#submupd").attr("onclick","subthis("+id+")")
+		}
+
+		function subthis(id) {
+			$.get("../role/shouquan",{"roleId":id,"permid":$("#select").val()},function () {
+
+			},"json")
+		}
+		// 改变阶职
+		function chan(t) {
+			$.post(
+					"../employees/chan",{"empid":t},function () {
+					}
+			)
+			list(page.pageNum,true);
+			$("#roleid").val(1);
+			console.log("职位修改成功");
+		}
+		// 显示职介
+		function cha(t) {
+			if(t==1){
+				return "管理";
+			}else if (t==2){
+				return "降职";
+			}else if (t==3){
+				return  "升职";
+			}
+		}
+		// 重置密码
+		function newP(t) {
+			if(window.confirm("您确定要重置该角色密码吗")){
+				$.post(
+						"../employees/newP",{"empid":t},function () {
+						},"json"
+				)
+				list(page.pageNum,true);
+				console.log("重置成功");
+			}
+		}
+		// roleId换名称
+		function roleId(t) {
+			if(t==1){
+				return "管理员";
+			}else if(t==2){
+				return "经理";
+			}else if(t==3){
+				return "员工";
+			}
+		}
+		//全局modify
+		var modify = {modify:0}
+		//新增回显
+		function showInsert(){
+			$("#roleName").val("");
+			$("#roleInfo").val("");
+			$("#subm").attr("onclick","insert()")
+		}
+		function insert() {
+			var xx = {"roleName":$("#roleName").val(),"roleInfo":$("#roleInfo").val()}
+			$.get(
+					"../role/insert",xx,function () {
+
+					},"json"
+			)
+		}
+		// 修改回显
+		function showEdit(t) {
+			$("#roleName").val("");
+			$("#roleInfo").val("");
+			$("#subm").attr("onclick","alter("+t+")")
+		}
+		function alter(t) {
+			var xx = {"roleId":t,"roleName":$("#roleName").val(),"roleInfo":$("#roleInfo").val()}
+			$.get(
+					"../role/update",xx,function(){
+					},"json"
+			)
+		}
+		// 新增 修改
+		function edit(){
+			$.post(
+					"../employees/edit",{"empid":$("#empid").val(),"username":$("#username").val(),"password":$("#password").val(),"tel":$("#tel").val(),"name":$("#name").val(),"email":$("#email").val(),"roleid":$("#select").val(),"modify":modify.modify},function(){},"json"
+			)
+			list(page.pageNum,true);
+			modify.modify=0;
+			$("#empid").val(0);
+			$("#hid").val(0);
+			console.log("处理成功");
+		}
+		// 删除
+		function del(t){
+			if(window.confirm("是否删除")){
+				$.get(
+						"../role/delete",{"roleId":t},function(){
+						},"json"
+				)
+			}
+		}
+		// 重置所有角色密码
+		function boom() {
+			if(window.confirm("您真的真的确定要重置所有角色密码吗？")){
+				$.get(
+						"../employees/modifyall",{},function (data) {
+							alert(data+"------> ")
+						},"json"
+				)
+				list(page.pageNum,true);
+			}
+		}
+		//添加权限
+		function editQ() {
+			$.post(
+					"../employees/editQ",{"roleId":$("#select1").val(),"pinfo":$("#select2").val()},function () {
+					},"json"
+			)
+			$("#select1").val(4);
+			$("#select2").val(1);
+			// $("#select2").show();
+		}
+		// // 打开权限 显示该职位没有的权限
+		// function kaiQ() {
+		// 	console.log(11111)
+		// 	$.post(
+		// 			"../employees/kaiQ",{"roleid":$("#select1").val()},function (data) {
+		// 				console.log(data);
+		// 				$.each(data,function (i,e) {
+		// 					e.contains()
+		// 					$("#jl").hide()
+		// 					$("#select2").find("option").hide();
+		// 				})
+		// 			}
+		// 	)
+		// }
+
+	</script>
+</head>
+
+<body class="hold-transition skin-red sidebar-mini">
+  <!-- .box-body -->
+                    <div class="box-header with-border">
+                        <h3 class="box-title">角色管理</h3>
+                    </div>
+
+                    <div class="box-body">
+
+                        <!-- 数据表格 -->
+                        <div class="table-box">
+
+                            <!--工具栏-->
+                            <div class="pull-left">
+                                <div class="form-group form-inline">
+                                    <div class="btn-group">
+                                        <tr>
+											<button type="button" class="btn btn-default" title="新建" data-toggle="modal" data-target="#editModal" onclick="showInsert()">添加角色</button>
+											<button type="button" class="btn btn-default" style="margin-left: 10px;background-color: red"  onclick="boom()">重置所有角色密码</button>
+										</tr>
+									</div>
+                                </div>
+                            </div>
+
+
+							<div class="box-tools pull-right">
+                                <div class="has-feedback">
+							                                         
+                                </div>
+                            </div>
+                            <!--工具栏/-->
+
+			                  <!--数据列表-->
+			                  <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			                      <thead>
+			                          <tr>
+<!--										  $("#empid").val("");-->
+<!--										  $("#username").val("");-->
+<!--										  $("#password").val("");-->
+<!--										  $("#tel").val("");-->
+<!--										  $("#name").val("");-->
+<!--										  $("#email").val("");-->
+
+										  <th class="sorting_asc">职务编号</th>
+									      <th class="sorting">职务</th>
+									      <th class="sorting">职务代号</th>
+<!--										  <th class="sorting">拥有权限</th>-->
+					                      <th class="text-center">操作</th>
+			                          </tr>
+			                      </thead>
+			                  </table>
+			                  <!--数据列表/-->                        
+
+                        </div>
+                        <!-- 数据表格 /-->
+
+                     </div>
+                    <!-- /.box-body -->
+
+
+<!-- 编辑窗口 -->
+<!-- 员工ID 用户名 密码 电话 姓名 邮箱 职位编号-->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" >
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3 id="myModalLabel">角色编辑</h3>
+		</div>
+<!--修改表单-->
+<form id="editForm">
+		<div class="modal-body" >
+			<input type="hidden" id="empid" name="empid" value="0">
+			<table class="table table-bordered table-striped"  width="800px">
+		      	<tr>
+		      		<td>职务</td>
+		      		<td><input  class="form-control" placeholder="职务名" id="roleName" name="roleName">  </td>
+		      	</tr>		      	
+		      	<tr>
+		      		<td>职务代号</td>
+		      		<td><input  class="form-control" placeholder="职务代号" id="roleInfo" name="roleInfo">  </td>
+		      	</tr>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" id="subm">保存</button>
+			<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+		</div>
+</form>
+<!--		end-->
+	  </div>
+	</div>
+</div>
+
+
+  <!-- 编辑窗口 -->
+  <!-- 员工ID 用户名 密码 电话 姓名 邮箱 职位编号-->
+  <div class="modal fade" id="addpermi" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" >
+		  <div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				  <h3 >选择权限</h3>
+			  </div>
+			  <!--修改表单-->
+			  <form id="selepermi">
+				  <div class="modal-body" >
+					  <table class="table table-bordered table-striped"  width="800px">
+						  <tr>
+							  <td>
+								  <select class='form-control' id="select"></select>
+							  </td>
+						  </tr>
+					  </table>
+				  </div>
+				  <div class="modal-footer">
+					  <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" id="submupd">保存</button>
+					  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+				  </div>
+			  </form>
+			  <!--		end-->
+		  </div>
+	  </div>
+  </div>
+
+  <div class="modal fade" id="editModal1" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" >
+		  <div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				  <h3 id="myModalLabel1">添加权限</h3>
+			  </div>
+			  <!--修改表单-->
+			  <form id="editForm1">
+				  <div class="modal-body" >
+					  <table class="table table-bordered table-striped"  width="800px">
+						  <tr>
+							  <td>职位</td>
+							  <td>
+								  <select id="select1" name="select1" class="form-control" >
+									  <option value="1" >管理员</option>
+									  <option id="jl" value="2" >经理</option>
+									  <option value="3" >员工</option>
+									  <option value="4"  selected="selected"></option>
+								  </select>
+							  </td>
+						  </tr>
+						  <tr>
+							  <td>权限</td>
+							  <td>
+								  <select id="select2" name="select2" class="form-control">
+									  <option value="emp:cus" name="emp:cus">客户共享</option>
+									  <option value="emp:upd" name="emp:upd">客户拜访记录添加、修改</option>
+									  <option value="1"  selected="selected"></option>
+								  </select>
+							  </td>
+						  </tr>
+					  </table>
+				  </div>
+				  <div class="modal-footer">
+					  <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="editQ()">保存</button>
+					  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+				  </div>
+			  </form>
+			  <!--		end-->
+		  </div>
+	  </div>
+  </div>
+
+<!--分页-->
+  <ul class="pagination" id="page"></ul>
+
+</body>
+</html>
